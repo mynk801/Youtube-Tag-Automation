@@ -8,7 +8,7 @@ from googleapiclient.discovery import build
 import json
 
 # Set up the API client and search for videos
-api_key = 'AIzaSyAdiwelV4X32OUoQHAk4s8uFGQ8i3K2iGk'
+api_key = '<YOUR-API-KEY>'
 youtube = build('youtube', 'v3', developerKey=api_key)
 
 # Function to extract video ID from YouTube URL
