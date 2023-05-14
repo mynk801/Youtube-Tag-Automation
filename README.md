@@ -61,9 +61,6 @@ Contributions to this project are welcome! If you encounter any issues or have i
 
 When contributing, please adhere to the existing code style and ensure that your changes are well-documented.
 
-## License
-
-This project is licensed under the [MIT License](LICENSE).
 
 ## Disclaimer
 
