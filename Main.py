@@ -1,117 +1,131 @@
 import re
-import requests
-from bs4 import BeautifulSoup
-import os
-import google.auth.credentials
-from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
-import json
 
-# Set up the API client and search for videos
-api_key = '<YOUR-API-KEY>'
+# Replace YOUR_API_KEY with your actual API key
+api_key = 'YOUR_API_KEY'
 youtube = build('youtube', 'v3', developerKey=api_key)
 
-# Function to extract video ID from YouTube URL
+
+video_url = input('Enter a YouTube video URL: ')
+max_results = 5
+tags_required = input('Enter the number of tags required (): ')
+
+
 def extract_video_id(url):
     match = re.search(r'(?<=v=)[^&]+', url)
     return match.group(0) if match else None
 
-new_tags = {}
-def search_tag(title):
-    search_query = title
-    search_response = youtube.search().list(q=search_query, part='id,snippet', type='video').execute()
 
-    # Loop through the search results and print out video details
-    
-    for result in search_response.get('items', []):
-        video_id = result['id']['videoId']
-        video_title = result['snippet']['title']
-        video_url = f'https://www.youtube.com/watch?v={video_id}'
-        print(f'Title: {video_title}\nURL: {video_url}\n')
-        
-        # Scrape the video page to get the tags
-        request = requests.get(video_url)
-        html = BeautifulSoup(request.content, 'html.parser')
-        tags = html.find_all('meta', property='og:video:tag')
-        for tag in tags:
-            # Convert tag to lowercase
-            tag_lower = tag['content'].lower()
-            
-            # Add tag to dictionary or increment its count
-            if tag_lower in new_tags:
-                new_tags[tag_lower] += 1
-            else:
-                new_tags[tag_lower] = 1
-
-    # Sort the dictionary by value in descending order
-    new_tags_sorted = dict(sorted(new_tags.items(), key=lambda item: item[1], reverse=True))
-
-    # Print out the dictionary of tags and their counts in descending order
-    print('Tags (ordered by occurrences):')
-    for tag, count in new_tags_sorted.items():
-        print(f'{tag}: {count}')
-
-    # Choose the top 15 tags and delete the others
-    tags_list = list(new_tags_sorted.keys())[:15]
-    tags_dict_top15 = {tag: new_tags_sorted[tag] for tag in tags_list}
-
-    # Print out the dictionary of top 15 tags and their counts
-    print('\nTop 15 tags:')
-    for tag, count in tags_dict_top15.items():
-        print(f'{tag}: {count}')
-
-
-# Prompt user to enter a YouTube video URL
-video_url = input('Enter a YouTube video URL: ')
-
-# Extract the video ID from the URL
 video_id = extract_video_id(video_url)
 if not video_id:
     print('Invalid YouTube video URL')
     exit()
 
-# Call the YouTube API to fetch video details
-video_response = youtube.videos().list(
-    part='snippet',
-    id=video_id
-).execute()
 
-# Extract the tags and count their occurrences
-title = video_response['items'][0]['snippet'].get('title', '')
-#  Scrape the video page to get the tags
-request = requests.get(video_url)
-html = BeautifulSoup(request.content, 'html.parser')
-tags = html.find_all('meta', property='og:video:tag')
-current_tags = {}
+def get_video_title(video_id):
+    try:
+        youtube = build('youtube', 'v3', developerKey=api_key)
+        response = youtube.videos().list(
+            part='snippet',
+            id=video_id
+        ).execute()
 
-for tag in tags:
-    # Convert tag to lowercase
-    tag_lower = tag['content'].lower()
+        title = response['items'][0]['snippet']['title']
+        return title
+    except Exception as e:
+        print(f"Error occurred: {str(e)}")
+        return None
+
+
+def get_related_videos(video_title, max_results):
+    try:
+        youtube = build('youtube', 'v3', developerKey=api_key)
+        response = youtube.search().list(
+            part='snippet',
+            q=video_title,
+            type='video',
+            maxResults=max_results
+        ).execute()
+
+        video_list = response['items']
+        related_videos = []
+        for video in video_list:
+            title = video['snippet']['title']
+            video_id = video['id']['videoId']
+            related_videos.append((title, video_id))
+
+        return related_videos
+    except Exception as e:
+        print(f"Error occurred: {str(e)}")
+        return None
+
+def get_video_tags(video_id, tag_occurrences):
+    try:
+        youtube = build('youtube', 'v3', developerKey=api_key)
+        response = youtube.videos().list(
+            part='snippet',
+            id=video_id
+        ).execute()
+
+        tags = response['items'][0]['snippet'].get('tags', [])
+        lowercase_tags = [tag.lower() for tag in tags]
         
-    # Add tag to dictionary or increment its count
-    if tag_lower in current_tags:
-        current_tags[tag_lower] += 1
+        for tag in lowercase_tags:
+            if tag in tag_occurrences:
+                tag_occurrences[tag] += 1
+            else:
+                tag_occurrences[tag] = 1
+    except Exception as e:
+        print(f"Error occurred: {str(e)}")
+
+def update_video_tags(video_id, tags):
+    try:
+        youtube = build('youtube', 'v3', developerKey=api_key)
+        response = youtube.videos().list(
+            part='snippet',
+            id=video_id
+        ).execute()
+
+        video = response['items'][0]
+        snippet = video['snippet']
+        snippet['tags'] = tags
+
+        update_response = youtube.videos().update(
+            part='snippet',
+            body={
+                'id': video_id,
+                'snippet': snippet
+            }
+        ).execute()
+
+        print("Video tags updated successfully!")
+    except Exception as e:
+        print(f"Error occurred: {str(e)}")
+
+tags_ini={}
+title = get_video_title(video_id)
+if title:
+    related_videos = get_related_videos( title, max_results)
+    if related_videos:
+        for video in related_videos:
+            get_video_tags(video[1], tags_ini)
+            
+if tags_ini:
+    print("\nTop Tags:")
+    sorted_tags = sorted(tags_ini.items(), key=lambda x: x[1], reverse=True)
+    if tags_required.isdigit() and int(tags_required) <= len(sorted_tags):
+        top_tags = sorted_tags[:int(tags_required)]
     else:
-        current_tags[tag_lower] = 1
+        top_tags = sorted_tags
+    tags_ini = dict(top_tags)
+    for tag, count in tags_ini.items():
+        print(f"{tag}: {count}")
 
-# Sort the dictionary by value in descending order
-current_tags_sorted = dict(sorted(current_tags.items(), key=lambda item: item[1], reverse=True))
-
-# Print out the dictionary of tags and their counts in descending order
-print('Tags (ordered by occurrences):')
-for tag, count in current_tags_sorted.items():
-    print(f'{tag}: {count}')
-
-search_tag(title)
+tags_final={}
+get_video_tags(video_id, tags_final)
 
 
-# Call the YouTube API to update the tags of the video
-update_response = youtube.videos().update(
-    part='snippet',
-    body={
-        'id': video_id,
-        'snippet': {
-            'tags': new_tags
-        }
-    }
-).execute()
+tags_final.update(tags_ini)
+
+updated_tags = list(tags_final.keys())
+update_video_tags(video_id, updated_tags)

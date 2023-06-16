@@ -16,7 +16,7 @@ To get started with the YouTube Video Tags Updater, follow these steps:
 1. Clone the repository to your local machine using the following command:
 
 ```bash
-git clone https://github.com/your-username/youtube-tags-updater.git
+git clone https://github.com/mynk801/youtube-tags-updater.git
 ```
 
 2. Install the required Python dependencies by running the following command:
@@ -33,11 +33,11 @@ pip install -r requirements.txt
    - Create an API key for the project.
    - Make sure to restrict the API key to only have access to the YouTube Data API.
 
-4. Once you have your API key, open the `config.py` file and replace `'YOUR_API_KEY'` with your actual API key.
+4. Once you have your API key, open the `Main.py` file and replace `'YOUR_API_KEY'` with your actual API key.
 
 ## Usage
 
-1. Open the `main.py` file in a text editor.
+1. Open the `Main.py` file in a text editor.
 
 2. Find the `video_url` variable and replace the value with the URL of the YouTube video for which you want to update the tags.
 
