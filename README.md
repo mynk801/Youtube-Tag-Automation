@@ -37,23 +37,15 @@ pip install -r requirements.txt
 
 ## Usage
 
-1. Open the `Main.py` file in a text editor.
-
-2. Find the `video_url` variable and replace the value with the URL of the YouTube video for which you want to update the tags.
-
-3. Optionally, you can adjust other settings such as the number of related videos to consider (`num_related_videos`) and the maximum number of tags to extract (`max_tags`).
-
-4. Save the changes to the `main.py` file.
-
-5. Run the program using the following command:
+1. Run the program using the following command:
 
 ```bash
-python main.py
+python Main.py
 ```
 
-6. The program will fetch the top tags from related videos and update the tags of the specified video using the YouTube API.
+2. The program will fetch the top tags from related videos and update the tags of the specified video using the YouTube API.
 
-7. Once the process is complete, you can check the updated tags for your video on the YouTube Studio dashboard.
+3. Once the process is complete, you can check the updated tags for your video on the YouTube Studio dashboard.
 
 ## Contributing
 
